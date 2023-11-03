@@ -2,11 +2,31 @@
 title: "Assignment B-1: Making a function"
 author: "Irvin Ng"
 date: "2023-11-03"
-output: markdown_document
+output: github_document
 ---
 
 ```{r}
-custom_summary <- function(data, column_name) {
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gapminder))
+suppressPackageStartupMessages(library(testthat))
+```
+
+
+# Function Definition
+I wanted to make a function which gives me relevant summary data. In particular, I wanted the function to give me the counts, mean, median, and SD (where applicable). Even if the data was not numeric, it would at least give me a count of all the non-numeric data (eg. the amount of countries in a df).
+
+```{r}
+#' @Title Generate summary statistics
+#'
+#' This function calculates the different summary statistics (eg.count, mean, median, and standard deviation) of numeric values
+#' in the specified column of a data frame. In the case of non-numeric values, it would at least get counts.
+#'
+#' @param data A data frame containing the column to be summarized (e.g., gapminder dataset). I named this data because it seems to be a 
+#' very common name for the object even for other functions in other packages.
+#' @param column_name The name of the column in the data frame to be summarized.
+#' @return The count, mean, median, and standard deviation of numeric values.
+
+numeric_summary <- function(data, column_name) {
   # Check if the input data is a data frame
   if (!is.data.frame(data)) {
     stop("Input must be a data frame.")
@@ -17,28 +37,69 @@ custom_summary <- function(data, column_name) {
     stop("Specified column does not exist in the data frame.")
   }
   
-  # Handle NA values appropriately by excluding them from calculations
-  non_na_values <- na.omit(data[[column_name]])
+  # Extract numeric values from the specified column, excluding NA values
+  numeric_values <- na.omit(data[[column_name]])
   
-  # Calculate count, mean, median, and unique values
-  count <- length(non_na_values)
-  mean_value <- mean(non_na_values)
-  median_value <- median(non_na_values)
-  unique_values <- unique(non_na_values)
+  # Check if the column contains numeric data
+  if (length(numeric_values) == 0) {
+    stop("Specified column does not contain numeric data.")
+  }
   
-  # Create a summary report as a list
-  summary_report <- list(
-    Count = count,
-    Mean = mean_value,
-    Median = median_value,
-    Unique_Values = unique_values
+  # Calculate summary statistics with NA values removed
+  summary_stats <- list(
+    Count = length(numeric_values),
+    Mean = mean(numeric_values, na.rm = TRUE),
+    Median = median(numeric_values, na.rm = TRUE),
+    Standard_Deviation = sd(numeric_values, na.rm = TRUE)
   )
   
-  # Return the summary report
-  return(summary_report)
+  # Return the summary statistics
+  return(summary_stats)
 }
+
 gapminder
 
-custom_summary(gapminder, "country")
+```
+
+
+# Examples
+I will be using the gapminder dataset to demonstrate my function. Here, we will look at the population, GDP per capita, and the Country (non-numeric)
+
+## Example 1: Generate summary for the 'pop' column in the gapminder dataset
+```{r}
+numeric_summary(gapminder, "pop")
+```
+
+## Example 2: Generate summary for the 'gdpPercap' column in the gapminder dataset
+```{r}
+numeric_summary(gapminder, "gdpPercap")
+```
+
+## Example 3: Generate a summary for a non-numeric column (we'll see errors)
+```{r error=TRUE}
+numeric_summary(gapminder, "country")
+```
+
+# Error Testing
+
+```{r}
+# Make a custom df with NA values to do the second test:
+NA_df <- gapminder
+set.seed(1) # Set seed for reproducibility
+NA_df$gdpPercap[sample(1:nrow(NA_df), 10)] <- NA # Add NA values to 10 random rows
+
+
+test_that("numeric_summary function works as expected", {
+  # Test 1: Check if the function works with a numeric column without NA values
+  expect_equal(numeric_summary(gapminder, "pop")$Count, 1704)
+  
+  # Test 2: Check if the function works with a numeric column with NA values
+  expect_true(!is.na(numeric_summary(NA_df, "gdpPercap")$Mean))
+  
+  # Test 3: Check if the function handles non-numeric columns and throws an error
+  expect_error(numeric_summary(gapminder, "country"))
+})
+
+
 ```
 
