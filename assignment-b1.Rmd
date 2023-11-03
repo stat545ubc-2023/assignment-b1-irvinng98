@@ -1,0 +1,44 @@
+---
+title: "Assignment B-1: Making a function"
+author: "Irvin Ng"
+date: "2023-11-03"
+output: markdown_document
+---
+
+```{r}
+custom_summary <- function(data, column_name) {
+  # Check if the input data is a data frame
+  if (!is.data.frame(data)) {
+    stop("Input must be a data frame.")
+  }
+  
+  # Check if the input column exists in the data frame
+  if (!column_name %in% names(data)) {
+    stop("Specified column does not exist in the data frame.")
+  }
+  
+  # Handle NA values appropriately by excluding them from calculations
+  non_na_values <- na.omit(data[[column_name]])
+  
+  # Calculate count, mean, median, and unique values
+  count <- length(non_na_values)
+  mean_value <- mean(non_na_values)
+  median_value <- median(non_na_values)
+  unique_values <- unique(non_na_values)
+  
+  # Create a summary report as a list
+  summary_report <- list(
+    Count = count,
+    Mean = mean_value,
+    Median = median_value,
+    Unique_Values = unique_values
+  )
+  
+  # Return the summary report
+  return(summary_report)
+}
+gapminder
+
+custom_summary(gapminder, "country")
+```
+
